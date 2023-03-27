@@ -4,10 +4,10 @@ namespace App\Controller\Admin;
 
 use App\Entity\Fichier;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
-use EasyCorp\Bundle\EasyAdminBundle\Field\DateField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
+use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 
 class FichierCrudController extends AbstractCrudController
 {
@@ -22,8 +22,10 @@ class FichierCrudController extends AbstractCrudController
         return [
             TextField::new('nom'),
             TextField::new('nomKyriba'),
-            TextField::new('source'),
             TextField::new('etat'),
+            AssociationField::new('session'),
+            AssociationField::new('entite'),
+            AssociationField::new('etablissement'),
             DateTimeField::new('createdAt')->hideOnForm(),
         ];
     }

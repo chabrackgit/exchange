@@ -1,0 +1,17 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Inscription{% endblock %}
+
+{% block body %}
+<h2 class="col-5 mx-auto mb-5 mt-2">Inscription</h2>
+
+<div class="container">
+    <div class="col-6 mx-auto">
+        {{ form_start(form) }}
+        {{ form_rest(form) }}
+        <button type="submit" class="btn btn-primary">Inscription</button>
+        {{ form_end(form) }}
+    </div>
+
+</div>
+{% endblock %}

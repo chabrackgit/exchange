@@ -12,8 +12,11 @@ class Fichier
     // constantes EXPORT KYRIBA
 
     CONST SESSION_EXPORT = 'EXPORT';
+    CONST SESSION_REPORT = 'REPORT';
     CONST SESSION_BANKFW = 'BANKFW';
     CONST SESSION_PAYMFW = 'PAYMFW';
+
+    CONST TYPE_TRANSFERT_BANK = 'BANK';
 
 
     #[ORM\Id]
@@ -28,9 +31,6 @@ class Fichier
     private ?string $nomKyriba = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $source = null;
-
-    #[ORM\Column(length: 255)]
     private ?string $etat = null;
 
     #[ORM\Column]
@@ -43,22 +43,31 @@ class Fichier
     private ?string $ncVersion = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $session = null;
-
-    #[ORM\Column(length: 255)]
     private ?string $uid = null;
-
-    #[ORM\Column(length: 255)]
-    private ?string $exportType = null;
-
-    #[ORM\Column(length: 255)]
-    private ?string $template = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $other = null;
 
     #[ORM\Column(length: 255)]
     private ?string $mimeType = null;
+
+    #[ORM\ManyToOne(inversedBy: 'fichiers')]
+    private ?Session $session = null;
+
+    #[ORM\ManyToOne(inversedBy: 'fichiers')]
+    private ?Entite $entite = null;
+
+    #[ORM\ManyToOne(inversedBy: 'fichiers')]
+    private ?TemplateCode $templateCode = null;
+
+    #[ORM\ManyToOne(inversedBy: 'fichiers')]
+    private ?Etablissement $etablissement = null;
+
+    #[ORM\ManyToOne(inversedBy: 'fichiers')]
+    private ?TypeTransfert $typeTransfert = null;
+
+    #[ORM\ManyToOne(inversedBy: 'fichiers')]
+    private ?User $user = null;
 
 
     public function getId(): ?int
@@ -86,18 +95,6 @@ class Fichier
     public function setNomKyriba(string $nomKyriba): self
     {
         $this->nomKyriba = $nomKyriba;
-
-        return $this;
-    }
-
-    public function getSource(): ?string
-    {
-        return $this->source;
-    }
-
-    public function setSource(string $source): self
-    {
-        $this->source = $source;
 
         return $this;
     }
@@ -150,18 +147,6 @@ class Fichier
         return $this;
     }
 
-    public function getSession(): ?string
-    {
-        return $this->session;
-    }
-
-    public function setSession(string $session): self
-    {
-        $this->session = $session;
-
-        return $this;
-    }
-
     public function getUid(): ?string
     {
         return $this->uid;
@@ -174,29 +159,6 @@ class Fichier
         return $this;
     }
 
-    public function getExportType(): ?string
-    {
-        return $this->exportType;
-    }
-
-    public function setExportType(string $exportType): self
-    {
-        $this->exportType = $exportType;
-
-        return $this;
-    }
-
-    public function getTemplate(): ?string
-    {
-        return $this->template;
-    }
-
-    public function setTemplate(string $template): self
-    {
-        $this->template = $template;
-
-        return $this;
-    }
 
     public function getOther(): ?string
     {
@@ -218,6 +180,78 @@ class Fichier
     public function setMimeType(string $mimeType): self
     {
         $this->mimeType = $mimeType;
+
+        return $this;
+    }
+
+    public function getSession(): ?Session
+    {
+        return $this->session;
+    }
+
+    public function setSession(?Session $session): self
+    {
+        $this->session = $session;
+
+        return $this;
+    }
+
+    public function getEntite(): ?Entite
+    {
+        return $this->entite;
+    }
+
+    public function setEntite(?Entite $entite): self
+    {
+        $this->entite = $entite;
+
+        return $this;
+    }
+
+    public function getTemplateCode(): ?TemplateCode
+    {
+        return $this->templateCode;
+    }
+
+    public function setTemplateCode(?TemplateCode $templateCode): self
+    {
+        $this->templateCode = $templateCode;
+
+        return $this;
+    }
+
+    public function getEtablissement(): ?Etablissement
+    {
+        return $this->etablissement;
+    }
+
+    public function setEtablissement(?Etablissement $etablissement): self
+    {
+        $this->etablissement = $etablissement;
+
+        return $this;
+    }
+
+    public function getTypeTransfert(): ?TypeTransfert
+    {
+        return $this->typeTransfert;
+    }
+
+    public function setTypeTransfert(?TypeTransfert $typeTransfert): self
+    {
+        $this->typeTransfert = $typeTransfert;
+
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): self
+    {
+        $this->user = $user;
 
         return $this;
     }
