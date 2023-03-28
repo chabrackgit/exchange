@@ -18,46 +18,22 @@ class ExtractController extends AbstractController
 {
 
     private $kyribaService;
+    private $stfpService;
 
-    public function __construct(KyribaService $kyribaService) {
+    public function __construct(
+        KyribaService $kyribaService, 
+        SftpService $sftpService) {
         $this->kyribaService = $kyribaService;
+        $this->stfpService = $sftpService;
     }
 
     #[Route('/extract', name: 'app_extract')]
     public function index(EntityManagerInterface $em): Response
     {
-        $info = true;
-        $retour = $this->kyribaService->ExportKyriba();
-
-        // if ($info) {
-        //     return $this->redirectToRoute('admin');
-        // }
-        // $sshPeople = new SFTP('127.0.0.1', 2222);
-        // $autorizePeople = $sshPeople->login('userpeople', 'user');
-        // $retourPeople = $autorizePeople ? 'Oui' : 'Non';
-
-        // $sshU4bw = new SFTP('127.0.0.1', 2223);
-        // $autorizeU4bw = $sshU4bw->login('useru4bw', 'user');
-        // $retourU4bw = $autorizeU4bw ? 'Oui' : 'Non';
-
-        // $sshKyriba = new SFTP('127.0.0.1', 2225);
-        // $autorizeKyriba = $sshKyriba->login('userkyriba', 'user');
-        // $retourKyriba = $autorizeKyriba ? 'Oui' : 'Non';
-
-        // $sshOvh = new SFTP('141.94.68.92');
-        // $autorizeOvh = $sshOvh->login('debian', 'ERKMGghZ2V6');
-        // $retourOvh = $autorizeOvh ? 'Oui' : 'Non';
-        
-
-        // if ($autorizeOvh) {
-        //     $pwd = $sshOvh->exec('pwd');
-        //     $listFichier = $sshOvh->exec('ls -lrt');
-        //     dump('Connexion SFTP OVH : '.$retourOvh);
-        //     dump($pwd);
-        //     dump($listFichier);
-        // } else {
-        //     dump('Impossible de se connecter au serveur SFTP CHABDEV OVH !');
-        // }
+        $connexionKyriba = $this->stfpService->ConnexionSftp($_ENV['HOSTKYRIBA'], $_ENV['PORTKYRIBA'], $_ENV['LOGINKYRIBA'], $_ENV['PWDKYRIBA']);
+        $connexionUbw = $this->stfpService->ConnexionSftp($_ENV['HOSTUBW'], $_ENV['PORTUBW'], $_ENV['LOGINUBW'], $_ENV['PWDUBW']);
+        $connexionPs = $this->stfpService->ConnexionSftp($_ENV['HOSTPS'], $_ENV['PORTPS'], $_ENV['LOGINPS'], $_ENV['PWDPS']);
+        $retour = $this->kyribaService->ExportKyriba($connexionKyriba, $connexionUbw, $connexionPs);
 
         dd('fini');
 
@@ -69,48 +45,28 @@ class ExtractController extends AbstractController
     #[Route('/traitement', name: 'traitement')]
     public function executeTraitement(EntityManagerInterface $em): Response
     {   
-        $filename = 'INSEEC.NC4.EXPORT.2023032213263448397.COMP.00941_PS.CA.txt';
+        $connexionKyriba = $this->stfpService->ConnexionSftp($_ENV['HOSTKYRIBA'], $_ENV['PORTKYRIBA'], $_ENV['LOGINKYRIBA'], $_ENV['PWDKYRIBA']);
+        $connexionUbw = $this->stfpService->ConnexionSftp($_ENV['HOSTUBW'], $_ENV['PORTUBW'], $_ENV['LOGINUBW'], $_ENV['PWDUBW']);
+        $connexionPs = $this->stfpService->ConnexionSftp($_ENV['HOSTPS'], $_ENV['PORTPS'], $_ENV['LOGINPS'], $_ENV['PWDPS']);
+        $retour = $this->kyribaService->ExportKyriba($connexionKyriba, $connexionUbw, $connexionPs);
 
-        $sshKyriba = new SFTP('127.0.0.1', 2225);
-            $autorizeKyriba = $sshKyriba->login('userkyriba', 'user');
-            //$retourKyriba = $autorizeKyriba ? 'Oui' : 'Non';
-
-        if ($autorizeKyriba) {
-            $retour = $this->kyribaService->traitementFichier($filename, $sshKyriba);
-            $this->redirectToRoute('admin');
-        }
-        // $sshPeople = new SFTP('127.0.0.1', 2222);
-        // $autorizePeople = $sshPeople->login('userpeople', 'user');
-        // $retourPeople = $autorizePeople ? 'Oui' : 'Non';
-
-        // $sshU4bw = new SFTP('127.0.0.1', 2223);
-        // $autorizeU4bw = $sshU4bw->login('useru4bw', 'user');
-        // $retourU4bw = $autorizeU4bw ? 'Oui' : 'Non';
-
-        // $sshKyriba = new SFTP('127.0.0.1', 2225);
-        // $autorizeKyriba = $sshKyriba->login('userkyriba', 'user');
-        // $retourKyriba = $autorizeKyriba ? 'Oui' : 'Non';
-
-        // $sshOvh = new SFTP('141.94.68.92');
-        // $autorizeOvh = $sshOvh->login('debian', 'ERKMGghZ2V6');
-        // $retourOvh = $autorizeOvh ? 'Oui' : 'Non';
-        
-
-        // if ($autorizeOvh) {
-        //     $pwd = $sshOvh->exec('pwd');
-        //     $listFichier = $sshOvh->exec('ls -lrt');
-        //     dump('Connexion SFTP OVH : '.$retourOvh);
-        //     dump($pwd);
-        //     dump($listFichier);
-        // } else {
-        //     dump('Impossible de se connecter au serveur SFTP CHABDEV OVH !');
-        // }
-        dd('fini');
+        dd('fini traitement');
 
         return $this->render('admin/index.html.twig', [
             'controller_name' => 'ExtractController',
         ]);
     }
 
+    #[Route('/test', name: 'test')]
+    public function test(EntityManagerInterface $em): Response
+    {   
+        $filename = 'INSEEC.NC4.EXPORT.2023032213263448397.COMP.00941_PS.CA.txt';
+
+        
+
+        return $this->render('admin/test.html.twig', [
+            'filename' => $filename,
+        ]);
+    }
    
 }

@@ -44,18 +44,13 @@ class KyribaService {
         $this->em = $em;
     }
 
-    public function ExportKyriba() {
+    public function ExportKyriba($connexionKyriba, $connexionUbw, $connexionPs) {
 
-        // connexion SFTP sur le serveur Kyriba
-            $sshKyriba = new SFTP('127.0.0.1', 2225);
-            $autorizeKyriba = $sshKyriba->login('userkyriba', 'user');
-            //$retourKyriba = $autorizeKyriba ? 'Oui' : 'Non';
-
-        if ($autorizeKyriba) {
+        if ($connexionKyriba['authorized']) {
             
             // PARTIE EXPORT  (voir dans serveur Kyriba le bon dossier a récupérer)
-            $sshKyriba->chdir('export');
-            $list = $sshKyriba->rawlist();
+            $connexionKyriba['connexion']->chdir('export');
+            $list = $connexionKyriba['connexion']->rawlist();
             // vérifier le retour de $list avant de lancer nettoyagelisteFichiersDownload()
             $newList = $this->nettoyagelisteFichiersDownload($list);
 
@@ -67,7 +62,7 @@ class KyribaService {
                     dump('correspondance');
                 } else {
                     //dump('aucune correspondance trouvé pour le fichier :'. $filename);
-                    $retourRenommage = $this->traitementFichier($filename, $sshKyriba);
+                    $retourRenommage = $this->traitementFichier($filename, $connexionKyriba, $connexionUbw, $connexionPs);
             
                 }
             }
@@ -77,7 +72,7 @@ class KyribaService {
     }
 
 
-    public function traitementFichier($filename, $sshKyriba) {
+    public function traitementFichier($filename, $connexionKyriba, $connexionUbw, $connexionPs) {
             $fichier = new Fichier();
             $filenameInfo = explode('.', $filename);
             $customer   = $filenameInfo[0];
@@ -136,19 +131,9 @@ class KyribaService {
                     $this->em->persist($fichier);
                     $this->em->flush();
 
-                    // connexion SFTP sur le serveur ubw
-                    $sshUbw = new SFTP('127.0.0.1', 2223);
-                    $autorizeUbw = $sshUbw->login('useru4bw', 'user');
-                    $retourUbw = $autorizeUbw ? 'Oui' : 'Non';
-                
 
-                    // connexion SFTP sur le serveur PeopleSoft
-                    $sshPeople = new SFTP('127.0.0.1', 2222);
-                    $autorizePeople = $sshPeople->login('userpeople', 'user');
-                    $retourPeople = $autorizePeople ? 'Oui' : 'Non';
-
-                    if ($autorizePeople && $autorizeUbw) {
-                       $retourTransfert = $this->envoiFichier($filename, $sshKyriba, $sshPeople, $sshUbw, $kyribaRename);
+                    if ($connexionPs['authorized'] && $connexionUbw['authorized']) {
+                       $retourTransfert = $this->envoiFichier($filename, $kyribaRename, $connexionKyriba, $connexionUbw, $connexionPs);
                         
                         // // attribution de l'etat Transféré
                         $fichier->setEtat('Enregistré / Transféré');
@@ -188,20 +173,9 @@ class KyribaService {
                     $fichier->setCreatedAt(new \DateTimeImmutable());
                     $fichier->setEtat('Enregistré');
 
-                    // connexion SFTP sur le serveur ubw
-                    $sshUbw = new SFTP('127.0.0.1', 2223);
-                    $autorizeUbw = $sshUbw->login('useru4bw', 'user');
-                    $retourUbw = $autorizeUbw ? 'Oui' : 'Non';
-                
-
-                    // connexion SFTP sur le serveur PeopleSoft
-                    $sshPeople = new SFTP('127.0.0.1', 2222);
-                    $autorizePeople = $sshPeople->login('userpeople', 'user');
-                    $retourPeople = $autorizePeople ? 'Oui' : 'Non';
-
                     if (strpos($filename, 'REPORT') !== false) {
-                        if ($autorizePeople && $autorizeUbw) {
-                            $retourTransfert = $this->envoiFichier($filename, $sshKyriba, $sshPeople, $sshUbw, $kyribaRename);
+                        if ($connexionPs['authorized'] && $connexionUbw['authorized']) {
+                            $retourTransfert = $this->envoiFichier($filename, $kyribaRename, $connexionKyriba, $connexionUbw, $connexionPs);
                              // // attribution de l'etat Transféré
                              $fichier->setEtat('Enregistré / Transféré');
                          } else {
@@ -219,17 +193,21 @@ class KyribaService {
         }
     }
 
-    public function envoiFichier($filename, $sshKyriba, $sshPeople, $sshUbw, $kyribaRename) {
-        $data = $sshKyriba->exec('cd export; cat '.$filename);
+    public function envoiFichier($filename, $kyribaRename, $connexionKyriba, $connexionUbw, $connexionPs) {
+        $data = $connexionKyriba['connexion']->exec('cd export; cat '.$filename);
+        dump($connexionUbw);
+        dump($filename);
         if (strpos($filename, 'BANK') !== false) {
-            $sshUbw->chdir('Report/ubw');
-            $sshUbw->put($kyribaRename, $data);
+            $connexionUbw['connexion']->chdir('Report/');
+            $connexionUbw['connexion']->put($kyribaRename, $data);
+            $connexionUbw['connexion']->exec('cd ~');
         } else if(strpos($filename, 'AFB') !== false) {
-            $sshUbw->chdir('Export/ubw');
-            $sshUbw->put($kyribaRename, $data);
+            $connexionUbw['connexion']->chdir('Export/');
+            $connexionUbw['connexion']->put($kyribaRename, $data);
+            $connexionUbw['connexion']->exec('cd ~');
         } else {
-            $sshPeople->chdir('Export/peoplesoft');
-            $sshPeople->put($kyribaRename, $data);
+            $connexionPs['connexion']->chdir('Export/');
+            $connexionPs['connexion']->put($kyribaRename, $data);
         }
         
         return true;
