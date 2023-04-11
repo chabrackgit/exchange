@@ -27,20 +27,25 @@ class ExtractController extends AbstractController
         $this->stfpService = $sftpService;
     }
 
-    #[Route('/extract', name: 'app_extract')]
-    public function index(EntityManagerInterface $em): Response
+    #[Route('/exportKyribaToPs', name: 'app_export_ktoPs')]
+    public function exportPs(): Response
+    {
+        $connexionKyriba = $this->stfpService->ConnexionSftp($_ENV['HOSTKYRIBA'], $_ENV['PORTKYRIBA'], $_ENV['LOGINKYRIBA'], $_ENV['PWDKYRIBA']);
+        $connexionPs = $this->stfpService->ConnexionSftp($_ENV['HOSTPS'], $_ENV['PORTPS'], $_ENV['LOGINPS'], $_ENV['PWDPS']);
+        $this->kyribaService->KyribaToPs($connexionKyriba, $connexionPs);
+        return $this->redirectToRoute('admin');
+    }
+
+    #[Route('/exportKyribaToUbw', name: 'app_export_ktoUbw')]
+    public function exportUbw(): Response
     {
         $connexionKyriba = $this->stfpService->ConnexionSftp($_ENV['HOSTKYRIBA'], $_ENV['PORTKYRIBA'], $_ENV['LOGINKYRIBA'], $_ENV['PWDKYRIBA']);
         $connexionUbw = $this->stfpService->ConnexionSftp($_ENV['HOSTUBW'], $_ENV['PORTUBW'], $_ENV['LOGINUBW'], $_ENV['PWDUBW']);
-        $connexionPs = $this->stfpService->ConnexionSftp($_ENV['HOSTPS'], $_ENV['PORTPS'], $_ENV['LOGINPS'], $_ENV['PWDPS']);
-        $retour = $this->kyribaService->ExportKyriba($connexionKyriba, $connexionUbw, $connexionPs);
-
-        dd('fini');
-
-        return $this->render('extract/index.html.twig', [
-            'controller_name' => 'ExtractController',
-        ]);
+        $this->kyribaService->KyribaToUbw($connexionKyriba, $connexionUbw);
+        return $this->redirectToRoute('admin');
     }
+
+    
 
     #[Route('/traitement', name: 'traitement')]
     public function executeTraitement(EntityManagerInterface $em): Response
