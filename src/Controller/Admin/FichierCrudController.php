@@ -20,12 +20,12 @@ class FichierCrudController extends AbstractCrudController
     public function configureFields(string $pageName): iterable
     {
         return [
+            AssociationField::new('session'),
             TextField::new('nom'),
             TextField::new('nomKyriba'),
+            AssociationField::new('templateCode'),
             TextField::new('etat'),
-            AssociationField::new('session'),
             AssociationField::new('entite'),
-            AssociationField::new('etablissement'),
             DateTimeField::new('createdAt')->hideOnForm(),
         ];
     }

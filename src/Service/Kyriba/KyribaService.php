@@ -9,8 +9,8 @@ use App\Repository\FichierRepository;
 use App\Repository\SessionRepository;
 use App\Repository\TemplateCodeRepository;
 use App\Repository\TypeTransfertRepository;
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
-use Locale;
 
 class KyribaService {
 
@@ -68,32 +68,6 @@ class KyribaService {
         }
     }
 
-    public function ImportPsPayment($connexionKyriba, $connexionPs) {
-        if ($connexionKyriba['authorized']) {
-            $connexionKyriba['connexion']->chdir('kyriba');
-            $connexionKyriba['connexion']->chdir('peoplesoft_paiement');
-            $list = $connexionKyriba['connexion']->rawlist();
-            // vérifier le retour de $list avant de lancer nettoyagelisteFichiersDownload()
-            $newList = $this->nettoyagelisteFichiersDownload($list);
-            // partie export (de kyriba vers ubw)
-            // parcourir le dossier export de Kyriba
-            foreach ($newList as $key => $value) {
-                $filename = $value['filename'];
-                $res = $this->fichierRepository->findBy(['nom' => $filename]);
-                if (1 == 0) {
-                    dump('correspondance');
-                } else {
-                    //dump('aucune correspondance trouvé pour le fichier :'. $filename);
-                    $retourRenommage = $this->traitementImportPsPayment($filename, $connexionKyriba, $connexionPs);            
-                }
-            }
-        }
-    }
-
-    public function traitementImportPsPayment($filename, $connexionKyriba, $connexionPs) {
-        dd($filename);
-    }
-
     public function KyribaToUbw($connexionKyriba, $connexionUbw) {
         if ($connexionKyriba['authorized']) {
             $connexionKyriba['connexion']->chdir('kyriba');
@@ -101,17 +75,21 @@ class KyribaService {
             $list = $connexionKyriba['connexion']->rawlist();
             // vérifier le retour de $list avant de lancer nettoyagelisteFichiersDownload()
             $newList = $this->nettoyagelisteFichiersDownload($list);
+            $error = [];
             // partie export (de kyriba vers ubw)
             // parcourir le dossier export de Kyriba
             foreach ($newList as $key => $value) {
                 $filename = $value['filename'];
                 $res = $this->fichierRepository->findBy(['nom' => $filename]);
-                if (1 == 0) {
-                    dump('correspondance');
+                if ($res) {
+                    $error[] = $res;
                 } else {
                     //dump('aucune correspondance trouvé pour le fichier :'. $filename);
                     $retourRenommage = $this->traitementFichierKyribaToUbw($filename, $connexionKyriba, $connexionUbw);            
                 }
+            }
+            if (!empty($error)) {
+                return $error;
             }
         }
     }
@@ -123,19 +101,159 @@ class KyribaService {
             $list = $connexionKyriba['connexion']->rawlist();
             // vérifier le retour de $list avant de lancer nettoyagelisteFichiersDownload()
             $newList = $this->nettoyagelisteFichiersDownload($list);
+            $error = [];
             // partie export (de kyriba vers ubw)
             // parcourir le dossier export de Kyriba
             foreach ($newList as $key => $value) {
                 $filename = $value['filename'];
                 $res = $this->fichierRepository->findBy(['nom' => $filename]);
-                if (1 == 0) {
-                    dump('correspondance');
+                if ($res) {
+                    $error[] = $res;
                 } else {
                     //dump('aucune correspondance trouvé pour le fichier :'. $filename);
                     $retourRenommage = $this->traitementFichierKyribaToPs($filename, $connexionKyriba, $connexionPs);            
                 }
             }
+            if (!empty($error)) {
+                return $error;
+            }
         }
+    }
+
+    public function ImportPsPayment($connexionKyriba, $connexionPs) {
+        if ($connexionPs['authorized']) {
+            $connexionPs['connexion']->chdir('Backup');
+            $list = $connexionPs['connexion']->rawlist();
+            // vérifier le retour de $list avant de lancer nettoyagelisteFichiersDownload()
+            $newList = $this->nettoyagelisteFichiersDownload($list);
+            $error = [];
+            // partie export (de kyriba vers ubw)
+            // parcourir le dossier export de Kyriba
+            foreach ($newList as $key => $value) {
+                $filename = $value['filename'];
+                $res = $this->fichierRepository->findBy(['nom' => $filename]);
+                if ($res) {
+                    $error[] = $res;
+                } else {
+                    //dump('aucune correspondance trouvé pour le fichier :'. $filename);
+                    $traitement = $this->traitementImportPsPayment($value, $connexionKyriba, $connexionPs);
+                                
+                }
+            }
+            if (!empty($error)) {
+                return $error;
+            }
+        
+        }
+    }
+
+    public function ImportUbwPrlvm($connexionKyriba, $connexionUbw) {
+        if ($connexionUbw['authorized']) {
+            $connexionUbw['connexion']->chdir('Backup');
+            $list = $connexionUbw['connexion']->rawlist();            // vérifier le retour de $list avant de lancer nettoyagelisteFichiersDownload()
+            $newList = $this->nettoyagelisteFichiersDownload($list);
+            $error = [];
+            // partie export (de kyriba vers ubw)
+            // parcourir le dossier export de Kyriba
+            foreach ($newList as $key => $value) {
+                $filename = $value['filename'];
+                $res = $this->fichierRepository->findBy(['nom' => $filename]);
+                if ($res) {
+                    $error[] = $res;
+                } else {
+                    //dump('aucune correspondance trouvé pour le fichier :'. $filename);
+                    $this->traitementImportUbwPrlvm($value, $connexionKyriba, $connexionUbw);         
+                }
+            }
+            if (!empty($error)) {
+                return $error;
+            }
+        }
+    }
+
+    public function traitementImportUbwPrlvm($value, $connexionKyriba, $connexionUbw) {
+        $filenameInfo = explode('_', $value['filename']);
+        
+        $fichier = new Fichier();
+        $mimeType = 'txt';
+        $filenameInfo = explode('_', $value['filename']);
+
+        // récupération des objets
+        $entite = $this->entiteRepository->findOneBy(['codeUbw' => $filenameInfo[0]]);
+        $session = $this->sessionRepository->findOneBy(['code' => Fichier::SESSION_IMPORT]);
+        $dateCreated = new DateTimeImmutable();
+        $uid = 'UBW_'.$dateCreated->getTimestamp().substr($value['atime'], strlen($value['atime']) - 6);
+        $typeTransfert = $this->typeTransfertRepository->findOneBy(['code'=> 'PY_BULK']);
+        $templateCode = $this->templateCodeRepository->findOneBy(['code' => 'SDD']);
+
+        // renommage pour peoplesoft_paiement
+        $fileRename = Fichier::KYRIBA_CUSTOMER.'.'.Fichier::KYRIBA_NCVERSION.'.'.$session->getcode().'.'.$uid.'.'.$typeTransfert->getCode().'.'.$entite->getCodeKyriba().'_'.$templateCode->getCode().'.'.'null'.'.'.'null'.'.'.$mimeType;
+        
+        // attribution des valeurs à l'objet Fichier
+        $fichier->setNom($value['filename'])
+            ->setCustomer(Fichier::KYRIBA_CUSTOMER)
+            ->setNcVersion(Fichier::KYRIBA_NCVERSION)
+            ->setUid($uid)
+            ->setOther(null)
+            ->setMimeType($mimeType)
+            ->setEtat('Enregistré')
+            ->setEntite($entite)
+            ->setTemplateCode($templateCode)   
+            ->setNomKyriba($fileRename)
+            ->setSession($session)
+            ->setCreatedAt(new \DateTimeImmutable()) 
+            ->setTypeTransfert($typeTransfert);
+
+        //persistence des données
+        $this->em->persist($fichier);
+        $this->em->flush();
+
+        if ($connexionKyriba['authorized']) {
+            $retourTransfert = $this->envoiFichierUbwPrlvToKyriba($value['filename'], $fileRename, $connexionKyriba, $connexionUbw);
+         }
+
+    }
+
+    public function traitementImportPsPayment($value, $connexionKyriba, $connexionPs) {
+        $fichier = new Fichier();
+        $mimeType = 'txt';
+        $filenameInfo = explode('_', $value['filename']);
+
+        // récupération des objets
+        $entite = $this->entiteRepository->findOneBy(['codePeopleSoft'=> $filenameInfo[0]]);
+        $session = $this->sessionRepository->findOneBy(['code' => Fichier::SESSION_IMPORT]);
+        $dateCreated = new DateTimeImmutable();
+        $uid = 'PPS_'.$dateCreated->getTimestamp().substr($value['atime'], strlen($value['atime']) - 6);
+        $typeTransfert = $this->typeTransfertRepository->findOneBy(['code'=> 'PY_TRANSFER']);
+        $templateCode = $this->templateCodeRepository->findOneBy(['code' => 'PS_SCT']);
+
+        // renommage pour peoplesoft_paiement
+        $fileRename = Fichier::KYRIBA_CUSTOMER.'.'.Fichier::KYRIBA_NCVERSION.'.'.$session->getcode().'.'.$uid.'.'.$typeTransfert->getCode().'.'.$templateCode->getCode().'.'.$entite->getCodeKyriba().'.null.'.$mimeType;
+
+        // attribution des valeurs à l'objet Fichier
+        $fichier->setNom($value['filename'])
+            ->setCustomer(Fichier::KYRIBA_CUSTOMER)
+            ->setNcVersion(Fichier::KYRIBA_NCVERSION)
+            ->setUid($uid)
+            ->setOther(null)
+            ->setMimeType($mimeType)
+            ->setEtat('Enregistré')
+            ->setEntite($entite)
+            ->setTemplateCode($templateCode)   
+            ->setNomKyriba($fileRename)
+            ->setSession($session)
+            ->setCreatedAt(new \DateTimeImmutable()) 
+            ->setTypeTransfert($typeTransfert);
+
+        //persistence des données
+        $this->em->persist($fichier);
+        $this->em->flush();
+
+        if ($connexionKyriba['authorized']) {
+            $retourTransfert = $this->envoiFichierPsPaymentToKyriba($value['filename'], $fileRename, $connexionKyriba, $connexionPs);
+         }
+
+
     }
 
     public function traitementFichierKyribaToPs($filename, $connexionKyriba, $connexionPs) {
@@ -262,7 +380,6 @@ class KyribaService {
              $fichier->setEtat('Vide');
          }
     }
-
 
     public function traitementFichier($filename, $connexionKyriba, $connexionUbw, $connexionPs) {
             $fichier = new Fichier();
@@ -416,6 +533,21 @@ class KyribaService {
         $connexionPs['connexion']->chdir('import');
         $connexionPs['connexion']->put($kyribaRename, $data);
 
+    }
+
+    public function envoiFichierPsPaymentToKyriba($filename, $kyribaRename, $connexionKyriba, $connexionPs){
+        $data = $connexionPs['connexion']->exec('cd Backup/; cat '.$filename);
+        $connexionKyriba['connexion']->chdir('kyriba');
+        $connexionKyriba['connexion']->chdir('peoplesoft_paiement');
+        $connexionKyriba['connexion']->put($kyribaRename, $data);
+    }
+
+    //  A VOIR ERREUR OPEN CHANNEL SSH
+    public function envoiFichierUbwPrlvToKyriba($filename, $kyribaRename, $connexionKyriba, $connexionUbw){
+        $data = $connexionUbw['connexion']->exec('cd Backup/; cat '.$filename);
+        $connexionKyriba['connexion']->chdir('kyriba');
+        $connexionKyriba['connexion']->chdir('ubw');
+        $connexionKyriba['connexion']->put($kyribaRename, $data);
     }
 
     public function nettoyagelisteFichiersDownload(array $tab)

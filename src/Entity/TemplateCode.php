@@ -71,7 +71,7 @@ class TemplateCode
 
     public function __toString()
     {
-        return $this->code.' - '.$this->description;
+        return $this->libelle;
     }
 
     public function getLibelle(): ?string

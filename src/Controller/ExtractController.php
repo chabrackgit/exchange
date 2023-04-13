@@ -32,7 +32,12 @@ class ExtractController extends AbstractController
     {
         $connexionKyriba = $this->stfpService->ConnexionSftp($_ENV['HOSTKYRIBA'], $_ENV['PORTKYRIBA'], $_ENV['LOGINKYRIBA'], $_ENV['PWDKYRIBA']);
         $connexionPs = $this->stfpService->ConnexionSftp($_ENV['HOSTPS'], $_ENV['PORTPS'], $_ENV['LOGINPS'], $_ENV['PWDPS']);
-        $this->kyribaService->KyribaToPs($connexionKyriba, $connexionPs);
+        $retour = $this->kyribaService->KyribaToPs($connexionKyriba, $connexionPs);
+        if (array($retour)) {
+            foreach($retour as $arr) {
+                $this->addFlash('danger', 'Transfert échoué : le fichier  '.$arr[0]->getNom()).' existe déjà';
+            }
+        }
         return $this->redirectToRoute('admin');
     }
 
@@ -41,37 +46,55 @@ class ExtractController extends AbstractController
     {
         $connexionKyriba = $this->stfpService->ConnexionSftp($_ENV['HOSTKYRIBA'], $_ENV['PORTKYRIBA'], $_ENV['LOGINKYRIBA'], $_ENV['PWDKYRIBA']);
         $connexionUbw = $this->stfpService->ConnexionSftp($_ENV['HOSTUBW'], $_ENV['PORTUBW'], $_ENV['LOGINUBW'], $_ENV['PWDUBW']);
-        $this->kyribaService->KyribaToUbw($connexionKyriba, $connexionUbw);
+        $retour = $this->kyribaService->KyribaToUbw($connexionKyriba, $connexionUbw);
+        if (array($retour)) {
+            foreach($retour as $arr) {
+                $this->addFlash('danger', 'Transfert échoué : le fichier  '.$arr[0]->getNom()).' existe déjà';
+            }
+        }
         return $this->redirectToRoute('admin');
     }
 
-    
-
-    #[Route('/traitement', name: 'traitement')]
-    public function executeTraitement(EntityManagerInterface $em): Response
-    {   
+    #[Route('/importPsPayment', name: 'app_import_ps_payment')]
+    public function importPsPayment(): Response
+    {
         $connexionKyriba = $this->stfpService->ConnexionSftp($_ENV['HOSTKYRIBA'], $_ENV['PORTKYRIBA'], $_ENV['LOGINKYRIBA'], $_ENV['PWDKYRIBA']);
-        $connexionUbw = $this->stfpService->ConnexionSftp($_ENV['HOSTUBW'], $_ENV['PORTUBW'], $_ENV['LOGINUBW'], $_ENV['PWDUBW']);
         $connexionPs = $this->stfpService->ConnexionSftp($_ENV['HOSTPS'], $_ENV['PORTPS'], $_ENV['LOGINPS'], $_ENV['PWDPS']);
-        $retour = $this->kyribaService->ExportKyriba($connexionKyriba, $connexionUbw, $connexionPs);
-
-        dd('fini traitement');
-
-        return $this->render('admin/index.html.twig', [
-            'controller_name' => 'ExtractController',
-        ]);
+        $retour = $this->kyribaService->ImportPsPayment($connexionKyriba, $connexionPs);
+        if (array($retour)) {
+            foreach($retour as $arr) {
+                $this->addFlash('danger', 'Transfert échoué : le fichier  '.$arr[0]->getNom()).' existe déjà';
+            }
+        }
+        return $this->redirectToRoute('admin');
     }
 
-    #[Route('/test', name: 'test')]
-    public function test(EntityManagerInterface $em): Response
-    {   
-        $filename = 'INSEEC.NC4.EXPORT.2023032213263448397.COMP.00941_PS.CA.txt';
+    #[Route('/importUbwPrlvm', name: 'app_import_ubw_prelevement')]
+    public function importUbwPrlvm(): Response
+    {
+        $connexionKyriba = $this->stfpService->ConnexionSftp($_ENV['HOSTKYRIBA'], $_ENV['PORTKYRIBA'], $_ENV['LOGINKYRIBA'], $_ENV['PWDKYRIBA']);
+        $connexionUbw = $this->stfpService->ConnexionSftp($_ENV['HOSTUBW'], $_ENV['PORTUBW'], $_ENV['LOGINUBW'], $_ENV['PWDUBW']);
+        $retour = $this->kyribaService->ImportUbwPrlvm($connexionKyriba, $connexionUbw);
+        if (array($retour)) {
+            foreach($retour as $arr) {
+                $this->addFlash('danger', 'Transfert échoué : le fichier  '.$arr[0]->getNom()).' existe déjà';
+            }
+        }
+        return $this->redirectToRoute('admin');
+    }
 
-        
-
-        return $this->render('admin/test.html.twig', [
-            'filename' => $filename,
-        ]);
+    #[Route('/importUbwPrlvmAcceptance', name: 'app_import_ubw_prelevement_acceptance')]
+    public function importUbwPrlvmAcceptance(): Response
+    {
+        $connexionKyriba = $this->stfpService->ConnexionSftp($_ENV['HOSTKYRIBA'], $_ENV['PORTKYRIBA'], $_ENV['LOGINKYRIBA'], $_ENV['PWDKYRIBA']);
+        $connexionUbwAcceptance = $this->stfpService->ConnexionSftp($_ENV['HOST_UNIT4_ACCEPTANCE_EXPORT'], $_ENV['PORT_UNIT4_ACCEPTANCE_EXPORT'], $_ENV['LOGIN_UNIT4_ACCEPTANCE_EXPORT'], $_ENV['PWD_UNIT4_ACCEPTANCE_EXPORT']);
+        $retour = $this->kyribaService->ImportUbwPrlvm($connexionKyriba, $connexionUbwAcceptance);
+        if (array($retour)) {
+            foreach($retour as $arr) {
+                $this->addFlash('danger', 'Transfert échoué : le fichier  '.$arr[0]->getNom()).' existe déjà';
+            }
+        }
+        return $this->redirectToRoute('admin');
     }
    
 }
