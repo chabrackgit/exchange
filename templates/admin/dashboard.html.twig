@@ -5,44 +5,88 @@
         <p class="display-5">Administration Exchange Kyriba</p>
         <div class="jumbotron mb-5">
             <p class="lead">Bienvenue dans l'espace de gestion des transferts Kyriba</p>
-        </div>        
-        <p class="display-6"><i class="fas fa-arrow-down"></i> Export / Report</p>
+        </div>      
+        <p class="display-6"><i class="fas fa-arrow-down"></i> Export</p>
         <p class="lead">Cet outil permet de récupérer des informations provenant du serveur Kyriba, de les renommer, de les insérer en base de données et de les déposer dans chaque serveur respectif (peoplesoft, ubw) selon la convention de nommage établi par Kyriba pour les exports de fichiers.</p>
+        <div class="col-9 mx-auto mt-4">
+            {% for message in app.flashes('success') %}
+                <div class="alert alert-success alert-dismissible" role="alert">
+                    <button type="button" class"close" data-dismiss="alert">
+                        <span aria-hidden="true">&times;</span>
+                        <span class="sr-only">Close</span>
+                    </button>
+                    <p>{{ message | raw }}</p>
+                </div>
+            {% endfor %}
+            {% for message in app.flashes('danger') %}
+                <div class="alert alert-success alert-dismissible" role="alert">
+                    <button type="button" class"close" data-dismiss="alert">
+                        <span aria-hidden="true">&times;</span>
+                        <span class="sr-only">Close</span>
+                    </button>
+                    <p>{{ message | raw }}</p>
+                </div>
+            {% endfor %}
+        </div>
         <div class="row">
             <div class="col-4 alert alert-light">
-                <span class="display-3">{{ countTotal }}</span><span class="display-7"> Fichiers traités</span>  
+                <span class="display-3">{{ countExportPs }}</span><span class="display-7"> Fichiers traités (Kyriba => PeopleSoft)</span>  
             </div>
-            <div class="col-4 alert alert-light">
-                <span class="display-3">{{ countExport }}</span><span class="display-7"> Fichiers EXPORT</span>  
+            <div class="col-4 alert alert-success">
+                <span class="display-3">{{ countExportPs }}</span><span class="display-7"> Fichiers validés</span>  
             </div>
-            <div class="col-4 alert alert-light">
-                <span class="display-3">{{ countReport }}</span><span class="display-7"> Fichiers REPORT</span>  
+            <div class="col-4 alert alert-danger">
+                <span class="display-3">0</span><span class="display-7"> Fichiers echoués</span>  
             </div>
         </div>
         <div class="row mb-5">
-            <div class="col-4 alert alert-secondary">
-                <span class="display-3">{{ countTotal }}</span><span class="display-7"> Fichiers renommés</span>
+            <div class="col-4 alert alert-light">
+                <span class="display-3">{{ countExportUbw }}</span><span class="display-7"> Fichiers traités (Kyriba => Ubw)</span>
             </div>
             <div class="col-4 alert alert-success">
-                <span class="display-3">{{ countTotal }}</span><span class="display-7"> Fichiers validés</span>
+                <span class="display-3">{{ countExportUbw }}</span><span class="display-7"> Fichiers validés</span>
             </div>
             <div class="col-4 alert alert-danger">
                 <span class="display-3">0</span><span class="display-7"> Fichiers echoués</span>
             </div>
         </div>
-        <hr>
-        <div class="row">
-            <div class="row mt-3 mb-3">
-                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                    <a href="{{path('traitement')}}" class="btn btn-primary btn-lg me-md-2" type="button">Traitement</a>
-                    <a href="{{ path('app_export_ktoPs')}}" class="btn btn-primary btn-lg" type="button">Executer Export PeopleSoft</a>
-                    <a href="{{ path('app_export_ktoUbw')}}" class="btn btn-primary btn-lg" type="button">Executer Export Ubw</a>
-                </div>
+        <div class="row mt-3 mb-3">
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{{ path('app_export_ktoPs') }}" class="btn btn-outline-light btn-lg" type="button">Executer Export PeopleSoft</a>
+                <a href="{{ path('app_export_ktoUbw') }}" class="btn btn-outline-light btn-lg" type="button">Executer Export Ubw</a>
             </div>
         </div>
-        <hr>
         <p class="display-6 mt-5"><i class="fas fa-arrow-up"></i> Import</p>
         <p class="lead">Cet outil permet également de récupérer des informations provenant des serveurs respectifs (peoplesoft,ubw), de les renommer, de les insérer en base de données et de les déposer dans le serveur Kyriba selon la convention de nommage établi par Kyriba pour les imports de fichiers.</p>
+        <div class="row">
+            <div class="col-4 alert alert-light">
+                <span class="display-3">{{ countImportPs }}</span><span class="display-7"> Fichiers traités (PeopleSoft => Kyriba )</span>  
+            </div>
+            <div class="col-4 alert alert-success">
+                <span class="display-3">{{ countImportPs }}</span><span class="display-7"> Fichiers validés</span>  
+            </div>
+            <div class="col-4 alert alert-danger">
+                <span class="display-3">0</span><span class="display-7"> Fichiers echoués</span>  
+            </div>
+        </div>
+        <div class="row mb-5">
+            <div class="col-4 alert alert-light">
+                <span class="display-3">{{ countImportUbw }}</span><span class="display-7"> Fichiers traités (Ubw => Kyriba )</span>
+            </div>
+            <div class="col-4 alert alert-success">
+                <span class="display-3">{{ countImportUbw }}</span><span class="display-7"> Fichiers validés</span>
+            </div>
+            <div class="col-4 alert alert-danger">
+                <span class="display-3">0</span><span class="display-7"> Fichiers echoués</span>
+            </div>
+        </div>
+        <div class="row mt-3 mb-3">
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{{ path('app_import_ps_payment') }}" class="btn btn-outline-light btn-lg" type="button">Executer import Paiement PS</a>
+                <a href="{{ path('app_import_ubw_prelevement') }}" class="btn btn-outline-light btn-lg" type="button">Executer import Prelevements Ubw</a>
+                {## <a href="{{ path('app_import_ubw_prelevement_acceptance') }}" class="btn btn-outline-light btn-lg" type="button">Executer import Prelevements Ubw (ACPT)</a> ##}           
+            </div>
+        </div>
     </div>
    
 {% endblock %}
