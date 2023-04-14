@@ -87,6 +87,25 @@
                 {## <a href="{{ path('app_import_ubw_prelevement_acceptance') }}" class="btn btn-outline-light btn-lg" type="button">Executer import Prelevements Ubw (ACPT)</a> ##}           
             </div>
         </div>
+        <p class="display-6 mt-5"><i class="fas fa-list-check"></i> Report</p>
+        <p class="lead">Cet outil permet également de récupérer des informations provenant des serveurs respectifs (kyriba), de les renommer, de les insérer en base de données et de les déposer dans le serveur K: selon la convention de nommage établi par Kyriba pour les exports de fichiers.</p>
+        <div class="row">
+            <div class="col-4 alert alert-light">
+                <span class="display-3">{{ countReport }}</span><span class="display-7"> Fichiers traités (Kyriba => dossier kyriba )</span>  
+            </div>
+            <div class="col-4 alert alert-success">
+                <span class="display-3">{{ countReport }}</span><span class="display-7"> Fichiers validés</span>  
+            </div>
+            <div class="col-4 alert alert-danger">
+                <span class="display-3">0</span><span class="display-7"> Fichiers echoués</span>  
+            </div>
+        </div>
+        <div class="row mt-3 mb-3">
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{{ path('app_report') }}" class="btn btn-outline-light btn-lg" type="button">Executer Report</a>
+                {## <a href="{{ path('app_import_ubw_prelevement_acceptance') }}" class="btn btn-outline-light btn-lg" type="button">Executer import Prelevements Ubw (ACPT)</a> ##}           
+            </div>
+        </div>
     </div>
    
 {% endblock %}

@@ -41,8 +41,11 @@ class DashboardController extends AbstractDashboardController
         $sessionExportPs = $this->templateCodeRepository->findOneBy(['code' => 'PS']);
         $sessionImportUbw = $this->templateCodeRepository->findOneBy(['code' => 'SDD']);
         $sessionImportPs = $this->templateCodeRepository->findOneBy(['code' => 'PS_SCT']);
+        $sessionReport = $this->templateCodeRepository->findOneBy(['code' => 'BANK04']);
+
         $fichiersExportUbw = $this->fichierRepository->findBy(['templateCode' => $sessionExportUbw]);
         $fichiersExportPs = $this->fichierRepository->findBy(['templateCode' => $sessionExportPs]);
+        $fichiersReport = $this->fichierRepository->findBy(['templateCode' => $sessionReport]);
         $countTotalExport = count($fichiersExportUbw) + count($fichiersExportPs);
         $fichiersImportUbw = $this->fichierRepository->findBy(['templateCode' => $sessionImportUbw]);
         $fichiersImportPs = $this->fichierRepository->findBy(['templateCode' => $sessionImportPs]);
@@ -55,6 +58,7 @@ class DashboardController extends AbstractDashboardController
             'countExportPs' => count($fichiersExportPs),
             'countImportUbw' => count($fichiersImportUbw),
             'countImportPs' => count($fichiersImportPs),
+            'countReport' => count($fichiersReport)
         ]);
     }
 
