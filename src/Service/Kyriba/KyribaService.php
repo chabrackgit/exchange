@@ -156,12 +156,7 @@ class KyribaService {
             // partie export (de kyriba vers ubw)
             // parcourir le dossier export de Kyriba
             foreach ($newList as $key => $value) {
-<<<<<<< HEAD
                 $res = $this->fichierRepository->findBy(['nom' => $value['filename']]);
-=======
-                $filename = $value['filename'];
-                $res = $this->fichierRepository->findBy(['nom' => $filename]);
->>>>>>> e38332f093a84e2e7d63a63c7a3b32b3d3832535
                 if ($res) {
                     $error[] = $res;
                 } else {
