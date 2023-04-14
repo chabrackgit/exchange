@@ -433,12 +433,14 @@ class KyribaService {
 
     public function envoiFichierKyribaToUbw($filename, $kyribaRename, $connexionKyriba, $connexionUbw){
         $data = $connexionKyriba['connexion']->exec('cd kyriba/ubw_rdc; cat '.$filename);
+        $connexionKyriba['connexion']->exec('cd kyriba/ubw_rdc/; cp '.$filename.' ../backup/ubw_rdc_backup/; rm '.$filename);
         $connexionUbw['connexion']->chdir('import');
         $connexionUbw['connexion']->put($kyribaRename, $data);
     }
 
     public function envoiFichierKyribaToPs($filename, $kyribaRename, $connexionKyriba, $connexionPs){
         $data = $connexionKyriba['connexion']->exec('cd kyriba/peoplesoft_import; cat '.$filename);
+        $connexionKyriba['connexion']->exec('cd kyriba/peoplesoft_import/; cp '.$filename.' ../backup/peoplesoft_import_backup/; rm '.$filename);
         $connexionPs['connexion']->chdir('import');
         $connexionPs['connexion']->put($kyribaRename, $data);
 
@@ -446,6 +448,7 @@ class KyribaService {
 
     public function envoiFichierReportKyribaToK($filename, $kyribaRename, $connexionKyriba, $connexionPs){
         $data = $connexionKyriba['connexion']->exec('cd kyriba/rdc_import; cat '.$filename);
+        $connexionKyriba['connexion']->exec('cd kyriba/rdc_import/; cp '.$filename.' ../backup/rdc_import_backup/; rm '.$filename);
         $connexionPs['connexion']->chdir('report');
         $connexionPs['connexion']->put($kyribaRename, $data);
 
@@ -453,6 +456,7 @@ class KyribaService {
 
     public function envoiFichierPsPaymentToKyriba($filename, $kyribaRename, $connexionKyriba, $connexionPs){
         $data = $connexionPs['connexion']->exec('cd Backup/; cat '.$filename);
+        $connexionPs['connexion']->exec('cd Backup/; cp '.$filename.' ../Backup2/; rm '.$filename);
         $connexionKyriba['connexion']->chdir('kyriba');
         $connexionKyriba['connexion']->chdir('peoplesoft_paiement');
         $connexionKyriba['connexion']->put($kyribaRename, $data);
@@ -461,6 +465,7 @@ class KyribaService {
     //  A VOIR ERREUR OPEN CHANNEL SSH
     public function envoiFichierUbwPrlvToKyriba($filename, $kyribaRename, $connexionKyriba, $connexionUbw){
         $data = $connexionUbw['connexion']->exec('cd Backup/; cat '.$filename);
+        $connexionUbw['connexion']->exec('cd Backup/; cp '.$filename.' ../Backup2/; rm '.$filename);
         $connexionKyriba['connexion']->chdir('kyriba');
         $connexionKyriba['connexion']->chdir('ubw');
         $connexionKyriba['connexion']->put($kyribaRename, $data);
