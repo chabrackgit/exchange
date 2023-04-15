@@ -28,7 +28,7 @@ class ExtractController extends AbstractController
     }
 
     #[Route('/exportKyribaToPs', name: 'app_export_ktoPs')]
-    public function exportPs(): Response
+    public function exportKyribaToPs(): Response
     {
         $connexionKyriba = $this->stfpService->ConnexionSftp($_ENV['HOSTKYRIBA'], $_ENV['PORTKYRIBA'], $_ENV['LOGINKYRIBA'], $_ENV['PWDKYRIBA']);
         $connexionPs = $this->stfpService->ConnexionSftp($_ENV['HOSTPS'], $_ENV['PORTPS'], $_ENV['LOGINPS'], $_ENV['PWDPS']);
@@ -45,7 +45,7 @@ class ExtractController extends AbstractController
     }
 
     #[Route('/exportKyribaToUbw', name: 'app_export_ktoUbw')]
-    public function exportUbw(): Response
+    public function exportKyribaToUbw(): Response
     {
         $connexionKyriba = $this->stfpService->ConnexionSftp($_ENV['HOSTKYRIBA'], $_ENV['PORTKYRIBA'], $_ENV['LOGINKYRIBA'], $_ENV['PWDKYRIBA']);
         $connexionUbw = $this->stfpService->ConnexionSftp($_ENV['HOSTUBW'], $_ENV['PORTUBW'], $_ENV['LOGINUBW'], $_ENV['PWDUBW']);
@@ -78,7 +78,7 @@ class ExtractController extends AbstractController
         return $this->redirectToRoute('admin');
     }
 
-    #[Route('/report', name: 'app_report')]
+    #[Route('/reportKyribaToK', name: 'app_report')]
     public function reportKyribaToK(): Response
     {
         $connexionKyriba = $this->stfpService->ConnexionSftp($_ENV['HOSTKYRIBA'], $_ENV['PORTKYRIBA'], $_ENV['LOGINKYRIBA'], $_ENV['PWDKYRIBA']);
@@ -110,7 +110,7 @@ class ExtractController extends AbstractController
         else {
             $this->addFlash('success', 'Transfert réussi : OK');
         }
-        
+
         return $this->redirectToRoute('admin');
     }
 
