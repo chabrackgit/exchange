@@ -74,18 +74,23 @@ class KyribaService {
             // vérifier le retour de $list avant de lancer nettoyagelisteFichiersDownload()
             $newList = $this->nettoyagelisteFichiersDownload($list);
             $error = [];
+            $error['empty'] = false;
+            if (!empty($newList)) {
+                foreach ($newList as $key => $value) {
+                    $filename = $value['filename'];
+                    $res = $this->fichierRepository->findBy(['nom' => $filename]);
+                    if ($res) {
+                        $error['fichier'][] = $res;
+                    } else {
+                        //dump('aucune correspondance trouvé pour le fichier :'. $filename);
+                        $retourRenommage = $this->traitementFichierKyribaToPs($filename, $connexionKyriba, $connexionPs);            
+                    }
+                }
+            } else {
+                $error['empty'] = true;
+            }
             // partie export (de kyriba vers ubw)
             // parcourir le dossier export de Kyriba
-            foreach ($newList as $key => $value) {
-                $filename = $value['filename'];
-                $res = $this->fichierRepository->findBy(['nom' => $filename]);
-                if ($res) {
-                    $error[] = $res;
-                } else {
-                    //dump('aucune correspondance trouvé pour le fichier :'. $filename);
-                    $retourRenommage = $this->traitementFichierKyribaToPs($filename, $connexionKyriba, $connexionPs);            
-                }
-            }
             if (!empty($error)) {
                 return $error;
             }

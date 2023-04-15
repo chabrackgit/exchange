@@ -2,6 +2,7 @@
 
 namespace App\Command;
 
+use App\Service\Kyriba\KyribaRunService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -16,6 +17,13 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 )]
 class RunServiceCommand extends Command
 {
+    private $kyribaRun;
+
+    public function __construct(KyribaRunService $kyribaRun)
+    {
+        parent::__construct();
+        $this->kyribaRun = $kyribaRun;
+    }
     protected function configure(): void
     {
         $this
@@ -24,7 +32,7 @@ class RunServiceCommand extends Command
         ;
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output): int
+    protected function execute(InputInterface $input, OutputInterface $output)
     {
         
         $arg1 = $input->getArgument('service');
@@ -32,18 +40,46 @@ class RunServiceCommand extends Command
         if (is_null($arg1)) {
             $io = new SymfonyStyle($input, $output);
             $io->note(sprintf('You passed an argument: %s', $arg1));
-            $arg1 = $io->choice('Sélectionnez le traitement à éxecuter', ['exportKyribaToPs (informations provenant de Kyriba OMNES peoplesoft_import , à renommer et déposer dans le dossier /import du serveur PeopleSoft)', 'exportKyribaToUbw (informations provenant de Kyriba ubw_rdc, à renommer et déposer dans le dossier /import du serveur Ubw)', 'reportKyribaToK (informations provenant de Kyriba, à renommer et déposer dans le dossier /report du serveur PeopleSoft)', 'importPsPayment (informations provenant de PeopleSoft, à renommer et déposer dans le dossier /kyriba/peoplesoft_paiement du serveur Kyriba OMNES)', 'importUbwPrlvm (informations provenant de Ubw, à renommer et déposer dans le dossier /kyriba/ubw du serveur Kyriba OMNES)']);
+            $arg1 = $io->choice('Sélectionnez le traitement à éxecuter', ['exportKyribaToPs', 'exportKyribaToUbw', 'reportKyribaToK', 'importPsPayment', 'importUbwPrlvm']);
             
-            
-            dd($arg1);
+            switch ($arg1) {
+                case 'exportKyribaToPs':
+                    $retour = $this->kyribaRun->exportKyribaToPs();
+                    if (is_array($retour)) {
+                        if ($retour['empty']) {
+                            $io->info('Transfert échoué: aucun fichier dans le dossier kyriba/peoplesoft_import');
+                            return Command::FAILURE;
+                        }
+                        if (!empty($retour['fichier'])) {
+                            $io->info('Transfert échoué pour '.count($retour['fichier']).' fichier existant déjà en base de données');
+                            return Command::FAILURE;
+                        }
+                    }
+                    if (!$retour['empty']) {
+                        $io->info('Transfert réussi');
+                        return Command::SUCCESS;
+                    }
+                    break;
+                case 'exportKyribaToUbw':
+                    $retour = $this->kyribaRun->exportKyribaToUbw();
+                    break;
+                case 'reportKyribaToK':
+                    $retour = $this->kyribaRun->reportKyribaToK();
+                    break;
+                case 'importPsPayment':
+                    $retour = $this->kyribaRun->importPsPayment();
+                    break;
+                case 'importUbwPrlvm':
+                    $retour = $this->kyribaRun->importUbwPrlvm();
+                    break;
+                default:
+                    break;
+            }
+            if ($retour) {
+                return Command::SUCCESS;
+            } else {
+                return Command::FAILURE;
+            }    
         }
-
-        if ($input->getOption('option1')) {
-            // ...
-        }
-
-        $io->success('You have a new command! Now make it your own! Pass --help to see your options.');
-
-        return Command::SUCCESS;
     }
 }
