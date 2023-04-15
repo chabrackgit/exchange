@@ -1,5 +1,6 @@
 
 ###> symfony/framework-bundle ###
+/snapchot_extractdb.sql
 /.env.local
 /.env.local.php
 /.env.*.local
