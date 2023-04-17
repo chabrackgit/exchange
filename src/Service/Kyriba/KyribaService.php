@@ -74,7 +74,7 @@ class KyribaService {
             // vérifier le retour de $list avant de lancer nettoyagelisteFichiersDownload()
             $newList = $this->nettoyagelisteFichiersDownload($list);
             $error = [];
-            $error['empty'] = false;
+            $error['emptyTab'] = true;
             if (!empty($newList)) {
                 foreach ($newList as $key => $value) {
                     $filename = $value['filename'];
@@ -87,7 +87,7 @@ class KyribaService {
                     }
                 }
             } else {
-                $error['empty'] = true;
+                $error['emptyTab'] = false;
             }
             // partie export (de kyriba vers ubw)
             // parcourir le dossier export de Kyriba

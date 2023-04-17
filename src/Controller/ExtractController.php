@@ -33,14 +33,18 @@ class ExtractController extends AbstractController
         $connexionKyriba = $this->stfpService->ConnexionSftp($_ENV['HOSTKYRIBA'], $_ENV['PORTKYRIBA'], $_ENV['LOGINKYRIBA'], $_ENV['PWDKYRIBA']);
         $connexionPs = $this->stfpService->ConnexionSftp($_ENV['HOSTPS'], $_ENV['PORTPS'], $_ENV['LOGINPS'], $_ENV['PWDPS']);
         $retour = $this->kyribaService->KyribaToPs($connexionKyriba, $connexionPs);
-        if (array($retour) && !is_null($retour)) {
-            foreach($retour as $arr) {
-                $this->addFlash('danger', 'Transfert échoué : le fichier  '.$arr[0]->getNom()).' existe déjà';
+        if ($retour['emptyTab']) {
+            if (isset($retour['fichier']) && !empty($retour['fichier'])) {
+                foreach($retour['fichier'] as $arr) {
+                    $this->addFlash('danger', 'Transfert échoué : le fichier  '.$arr[0]->getNom()).' existe déjà';
+                }
+            } 
+            else {
+                $this->addFlash('success', 'Transfert réussi : OK');     
             }
         } else {
-            $this->addFlash('success', 'Transfert réussi : OK');
+            $this->addFlash('info', 'Aucun nouveau fichier à traiter');
         }
-
         return $this->redirectToRoute('admin');
     }
 
