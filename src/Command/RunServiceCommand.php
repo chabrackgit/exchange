@@ -13,7 +13,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
     name: 'run:service',
-    description: 'Add a short description for your command',
+    description: 'permet de lancer les commandes import/report/export (sélection d\'une tâche)',
 )]
 class RunServiceCommand extends Command
 {
@@ -39,26 +39,10 @@ class RunServiceCommand extends Command
 
         if (is_null($arg1)) {
             $io = new SymfonyStyle($input, $output);
-            $io->note(sprintf('You passed an argument: %s', $arg1));
-            $arg1 = $io->choice('Sélectionnez le traitement à éxecuter', ['exportKyribaToPs', 'exportKyribaToUbw', 'reportKyribaToK', 'importPsPayment', 'importUbwPrlvm']);
-            
+            $arg1 = $io->choice('Sélectionnez le traitement à éxecuter', ['exportKyribaToPs', 'exportKyribaToUbw', 'reportKyribaToK', 'importPsPayment', 'importUbwPrlvm']);            
             switch ($arg1) {
                 case 'exportKyribaToPs':
                     $retour = $this->kyribaRun->exportKyribaToPs();
-                    if (is_array($retour)) {
-                        if ($retour['empty']) {
-                            $io->info('Transfert échoué: aucun fichier dans le dossier kyriba/peoplesoft_import');
-                            return Command::FAILURE;
-                        }
-                        if (!empty($retour['fichier'])) {
-                            $io->info('Transfert échoué pour '.count($retour['fichier']).' fichier existant déjà en base de données');
-                            return Command::FAILURE;
-                        }
-                    }
-                    if (!$retour['empty']) {
-                        $io->info('Transfert réussi');
-                        return Command::SUCCESS;
-                    }
                     break;
                 case 'exportKyribaToUbw':
                     $retour = $this->kyribaRun->exportKyribaToUbw();
@@ -75,10 +59,23 @@ class RunServiceCommand extends Command
                 default:
                     break;
             }
-            if ($retour) {
-                return Command::SUCCESS;
+            if ($retour['emptyTab']) {
+                if (isset($retour['fichier']) && !empty($retour['fichier'])) {
+                    foreach($retour['fichier'] as $arr) {
+                        $io->warning('Transfert échoué : le fichier  '.$arr[0]->getNom().' existe déjà');
+                    }
+                    return Command::FAILURE;
+                } else {
+                    $io->success('Transfert réussi : OK'); 
+                    return Command::SUCCESS;
+                }
             } else {
+                $io->info('Aucun nouveau fichier à traiter');
                 return Command::FAILURE;
+            }
+            if ($retour) {
+                
+            } else {
             }    
         }
     }

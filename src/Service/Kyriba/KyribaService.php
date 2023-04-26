@@ -9,6 +9,7 @@ use App\Repository\FichierRepository;
 use App\Repository\SessionRepository;
 use App\Repository\TemplateCodeRepository;
 use App\Repository\TypeTransfertRepository;
+use App\Service\Ubw\UbwService;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -20,6 +21,7 @@ class KyribaService {
     private $entiteRepository;
     private $etablissementRepository;
     private $typeTransfertRepository;
+    private $ubwService;
     private $em;
 
     public function __construct(
@@ -30,6 +32,7 @@ class KyribaService {
         EtablissementRepository $etablissementRepository,
         TypeTransfertRepository $typeTransfertRepository,
         EntityManagerInterface $em,
+        UbwService $ubwService
         ) {
         $this->fichierRepository = $fichierRepository;
         $this->sessionRepository = $sessionRepository;
@@ -37,6 +40,7 @@ class KyribaService {
         $this->entiteRepository = $entiteRepository;
         $this->etablissementRepository = $etablissementRepository;
         $this->typeTransfertRepository = $typeTransfertRepository;
+        $this->ubwService = $ubwService;
         $this->em = $em;
     }
 
@@ -45,20 +49,21 @@ class KyribaService {
             $connexionKyriba['connexion']->chdir('kyriba');
             $connexionKyriba['connexion']->chdir('ubw_rdc');
             $list = $connexionKyriba['connexion']->rawlist();
-            // vérifier le retour de $list avant de lancer nettoyagelisteFichiersDownload()
             $newList = $this->nettoyagelisteFichiersDownload($list);
             $error = [];
-            // partie export (de kyriba vers ubw)
-            // parcourir le dossier export de Kyriba
-            foreach ($newList as $key => $value) {
-                $filename = $value['filename'];
-                $res = $this->fichierRepository->findBy(['nom' => $filename]);
-                if ($res) {
-                    $error[] = $res;
-                } else {
-                    //dump('aucune correspondance trouvé pour le fichier :'. $filename);
-                    $retourRenommage = $this->traitementFichierKyribaToUbw($filename, $connexionKyriba, $connexionUbw);            
+            $error['emptyTab'] = true;
+            if (!empty($newList)) {
+                foreach ($newList as $key => $value) {
+                    $filename = $value['filename'];
+                    $res = $this->fichierRepository->findBy(['nom' => $filename]);
+                    if ($res) {
+                        $error['fichier'][] = $res;
+                    } else {             
+                        $retourRenommage = $this->traitementFichierKyribaToUbw($value, $connexionKyriba, $connexionUbw);            
+                    }
                 }
+            } else {
+                $error['emptyTab'] = false;
             }
             if (!empty($error)) {
                 return $error;
@@ -71,7 +76,6 @@ class KyribaService {
             $connexionKyriba['connexion']->chdir('kyriba');
             $connexionKyriba['connexion']->chdir('peoplesoft_import');
             $list = $connexionKyriba['connexion']->rawlist();
-            // vérifier le retour de $list avant de lancer nettoyagelisteFichiersDownload()
             $newList = $this->nettoyagelisteFichiersDownload($list);
             $error = [];
             $error['emptyTab'] = true;
@@ -82,15 +86,12 @@ class KyribaService {
                     if ($res) {
                         $error['fichier'][] = $res;
                     } else {
-                        //dump('aucune correspondance trouvé pour le fichier :'. $filename);
                         $retourRenommage = $this->traitementFichierKyribaToPs($filename, $connexionKyriba, $connexionPs);            
                     }
                 }
             } else {
                 $error['emptyTab'] = false;
             }
-            // partie export (de kyriba vers ubw)
-            // parcourir le dossier export de Kyriba
             if (!empty($error)) {
                 return $error;
             }
@@ -105,16 +106,19 @@ class KyribaService {
             // vérifier le retour de $list avant de lancer nettoyagelisteFichiersDownload()
             $newList = $this->nettoyagelisteFichiersDownload($list);
             $error = [];
-            // partie export (de kyriba vers ubw)
-            // parcourir le dossier export de Kyriba
-            foreach ($newList as $key => $value) {
-                $res = $this->fichierRepository->findBy(['nom' => $value['filename']]);
-                if ($res) {
-                    $error[] = $res;
-                } else {
-                    //dump('aucune correspondance trouvé pour le fichier :'. $filename);
-                    $retourRenommage = $this->traitementFichierReport($value['filename'], $connexionKyriba, $connexionPs);            
+            $error['emptyTab'] = true;
+            if (!empty($newList)) {
+                foreach ($newList as $key => $value) {
+                    $filename = $value['filename'];
+                    $res = $this->fichierRepository->findBy(['nom' => $filename]);
+                    if ($res) {
+                        $error['fichier'][] = $res;
+                    } else {
+                        $retourRenommage = $this->traitementFichierReport($filename, $connexionKyriba, $connexionPs);            
+                    }
                 }
+            } else {
+                $error['emptyTab'] = false;
             }
             if (!empty($error)) {
                 return $error;
@@ -124,47 +128,50 @@ class KyribaService {
 
     public function ImportPsPayment($connexionKyriba, $connexionPs) {
         if ($connexionPs['authorized']) {
-            $connexionPs['connexion']->chdir('Backup');
+            $connexionPs['connexion']->chdir('Export');
             $list = $connexionPs['connexion']->rawlist();
             // vérifier le retour de $list avant de lancer nettoyagelisteFichiersDownload()
             $newList = $this->nettoyagelisteFichiersDownload($list);
             $error = [];
-            // partie export (de kyriba vers ubw)
-            // parcourir le dossier export de Kyriba
-            foreach ($newList as $key => $value) {
-                $filename = $value['filename'];
-                $res = $this->fichierRepository->findBy(['nom' => $filename]);
-                if ($res) {
-                    $error[] = $res;
-                } else {
-                    //dump('aucune correspondance trouvé pour le fichier :'. $filename);
-                    $traitement = $this->traitementImportPsPayment($value, $connexionKyriba, $connexionPs);
-                                
+            $error['emptyTab'] = true;
+            if (!empty($newList)) {
+                foreach ($newList as $key => $value) {
+                    $filename = $value['filename'];
+                    $res = $this->fichierRepository->findBy(['nom' => $filename]);
+                    if ($res) {
+                        $error['fichier'][] = $res;
+                    } else {
+                        $retourRenommage = $this->traitementImportPsPayment($value, $connexionKyriba, $connexionPs);            
+                    }
                 }
+            } else {
+                $error['emptyTab'] = false;
             }
             if (!empty($error)) {
                 return $error;
-            }
-        
+            }   
         }
     }
 
     public function ImportUbwPrlvm($connexionKyriba, $connexionUbw) {
         if ($connexionUbw['authorized']) {
-            $connexionUbw['connexion']->chdir('Backup');
+            $connexionUbw['connexion']->chdir('Export');
             $list = $connexionUbw['connexion']->rawlist();            // vérifier le retour de $list avant de lancer nettoyagelisteFichiersDownload()
             $newList = $this->nettoyagelisteFichiersDownload($list);
             $error = [];
-            // partie export (de kyriba vers ubw)
-            // parcourir le dossier export de Kyriba
-            foreach ($newList as $key => $value) {
-                $res = $this->fichierRepository->findBy(['nom' => $value['filename']]);
-                if ($res) {
-                    $error[] = $res;
-                } else {
-                    //dump('aucune correspondance trouvé pour le fichier :'. $filename);
-                    $this->traitementImportUbwPrlvm($value, $connexionKyriba, $connexionUbw);         
+            $error['emptyTab'] = true;
+            if (!empty($newList)) {
+                foreach ($newList as $key => $value) {
+                    $filename = $value['filename'];
+                    $res = $this->fichierRepository->findBy(['nom' => $filename]);
+                    if ($res) {
+                        $error['fichier'][] = $res;
+                    } else {
+                        $retourRenommage = $this->traitementImportUbwPrlvm($value, $connexionKyriba, $connexionUbw);            
+                    }
                 }
+            } else {
+                $error['emptyTab'] = false;
             }
             if (!empty($error)) {
                 return $error;
@@ -323,9 +330,9 @@ class KyribaService {
          }
     }
     
-    public function traitementFichierKyribaToUbw($filename, $connexionKyriba, $connexionUbw) {
+    public function traitementFichierKyribaToUbw($value, $connexionKyriba, $connexionUbw) {
         $fichier = new Fichier();
-        $filenameInfo = explode('.', $filename);
+        $filenameInfo = explode('.', $value['filename']);
         $customer   = $filenameInfo[0];
         $ncVersion  = $filenameInfo[1];
         $session    = $filenameInfo[2];
@@ -354,7 +361,7 @@ class KyribaService {
                            
 
         // attribution des valeurs à l'objet Fichier
-        $fichier->setNom($filename);
+        $fichier->setNom($value['filename']);
         $fichier->setCustomer($customer);
         $fichier->setNcVersion($ncVersion);
         $fichier->setUid($uid);
@@ -370,10 +377,29 @@ class KyribaService {
         // persistence en base de données
         $this->em->persist($fichier);
         $this->em->flush();
+
+
+        // $donnee=file($value['filename']); 
+        // dd($donnee);
+        // $fichier=fopen('info.txt',"w");
+        // fputs($fichier,'');
+        // $i=0;
+        // foreach($donnee as $d) 
+        // {
+        //     $keyLine = str_pad($i++, 5, 0, STR_PAD_LEFT);
+        //     fputs($fichier,$keyLine.' '.$d);
+        // }
+        // fclose($fichier);
+
+        // dump($value);
+        // dd($kyribaRename);
+
+
         
         
         if ($connexionUbw['authorized']) {
-            $retourTransfert = $this->envoiFichierKyribaToUbw($filename, $kyribaRename, $connexionKyriba, $connexionUbw);
+            $retourTransfert = $this->envoiFichierKyribaToUbw($value, $kyribaRename, $connexionKyriba, $connexionUbw);
+            // $retourTransfert = $this->updateFileUbw($value, $kyribaRename, $connexionKyriba, $connexionUbw);
             if ($retourTransfert) { 
                 $fichier->setEtat('Enregistré / Transféré');
             }
@@ -436,12 +462,27 @@ class KyribaService {
         }
     }
 
-    public function envoiFichierKyribaToUbw($filename, $kyribaRename, $connexionKyriba, $connexionUbw){
-        $data = $connexionKyriba['connexion']->exec('cd kyriba/ubw_rdc; cat '.$filename);
-        $connexionKyriba['connexion']->exec('cd kyriba/ubw_rdc/; cp '.$filename.' ../backup/ubw_rdc_backup/; rm '.$filename);
+    public function envoiFichierKyribaToUbw($value, $kyribaRename, $connexionKyriba, $connexionUbw){
+        $info = $connexionKyriba['connexion']->get($value['filename']);
+        //$data = $connexionKyriba['connexion']->exec('cd kyriba/ubw_rdc; cat '.$value['filename']);
+        $i = 0;
+        while($info) {
+            $keyLine = str_pad($i++, 5, 0, STR_PAD_LEFT);
+            dd($keyLine.' '.nl2br(fgets($info)));
+         }
+
+
+        foreach($info as $d) 
+        {
+            $keyLine = str_pad($i++, 5, 0, STR_PAD_LEFT);
+            dd($keyLine);
+            fputs($value['filename'] ,$keyLine.' '.$d);
+        }
+        $connexionKyriba['connexion']->exec('cd kyriba/ubw_rdc/; cp '.$value['filename'].' ../backup/ubw_rdc_backup/; rm '.$value['filename']);
         $connexionUbw['connexion']->chdir('import');
-        $connexionUbw['connexion']->put($kyribaRename, $data);
+        $connexionUbw['connexion']->put($kyribaRename, $info);
     }
+
 
     public function envoiFichierKyribaToPs($filename, $kyribaRename, $connexionKyriba, $connexionPs){
         $data = $connexionKyriba['connexion']->exec('cd kyriba/peoplesoft_import; cat '.$filename);
@@ -460,8 +501,8 @@ class KyribaService {
     }
 
     public function envoiFichierPsPaymentToKyriba($filename, $kyribaRename, $connexionKyriba, $connexionPs){
-        $data = $connexionPs['connexion']->exec('cd Backup/; cat '.$filename);
-        $connexionPs['connexion']->exec('cd Backup/; cp '.$filename.' ../Backup2/; rm '.$filename);
+        $data = $connexionPs['connexion']->exec('cd Export/; cat '.$filename);
+        $connexionPs['connexion']->exec('cd Export/; cp '.$filename.' ../Backup2/; rm '.$filename);
         $connexionKyriba['connexion']->chdir('kyriba');
         $connexionKyriba['connexion']->chdir('peoplesoft_paiement');
         $connexionKyriba['connexion']->put($kyribaRename, $data);
@@ -469,8 +510,8 @@ class KyribaService {
 
     //  A VOIR ERREUR OPEN CHANNEL SSH
     public function envoiFichierUbwPrlvToKyriba($filename, $kyribaRename, $connexionKyriba, $connexionUbw){
-        $data = $connexionUbw['connexion']->exec('cd Backup/; cat '.$filename);
-        $connexionUbw['connexion']->exec('cd Backup/; cp '.$filename.' ../Backup2/; rm '.$filename);
+        $data = $connexionUbw['connexion']->exec('cd Export/; cat '.$filename);
+        $connexionUbw['connexion']->exec('cd Export/; cp '.$filename.' ../Backup2/; rm '.$filename);
         $connexionKyriba['connexion']->chdir('kyriba');
         $connexionKyriba['connexion']->chdir('ubw');
         $connexionKyriba['connexion']->put($kyribaRename, $data);
