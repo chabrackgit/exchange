@@ -31,8 +31,11 @@ class TemplateCodeCrudController extends AbstractCrudController
         return [
             TextField::new('code'),
             TextField::new('libelle'),
-            TextField::new('dossier'),
             TextField::new('description'),
+            TextField::new('dossier'),
+            TextField::new('cheminBackup'),
+            TextField::new('cheminImport'),
+            TextField::new('cheminBackupImport'),
             AssociationField::new('session')
         ];
     }

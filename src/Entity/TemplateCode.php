@@ -34,6 +34,15 @@ class TemplateCode
     #[ORM\Column(length: 255)]
     private ?string $dossier = null;
 
+    #[ORM\Column(length: 255)]
+    private ?string $cheminBackup = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $cheminImport = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $cheminBackupImport = null;
+
     public function __construct()
     {
         $this->fichiers = new ArrayCollection();
@@ -136,6 +145,42 @@ class TemplateCode
     public function setDossier(string $dossier): self
     {
         $this->dossier = $dossier;
+
+        return $this;
+    }
+
+    public function getCheminBackup(): ?string
+    {
+        return $this->cheminBackup;
+    }
+
+    public function setCheminBackup(string $cheminBackup): self
+    {
+        $this->cheminBackup = $cheminBackup;
+
+        return $this;
+    }
+
+    public function getCheminImport(): ?string
+    {
+        return $this->cheminImport;
+    }
+
+    public function setCheminImport(?string $cheminImport): self
+    {
+        $this->cheminImport = $cheminImport;
+
+        return $this;
+    }
+
+    public function getCheminBackupImport(): ?string
+    {
+        return $this->cheminBackupImport;
+    }
+
+    public function setCheminBackupImport(?string $cheminBackupImport): self
+    {
+        $this->cheminBackupImport = $cheminBackupImport;
 
         return $this;
     }
